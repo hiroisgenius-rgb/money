@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>お財布残高管理端末</title>
+    <style>
+        body {
+            font-family: 'Courier New', 'Zen Maru Gothic', monospace, sans-serif;
+            background-color: #2b302a; /* OD色ベースの暗い背景 */
+            color: #d4dcce;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        /* 認証画面 */
+        #auth-screen {
+            background-color: #1a1e19;
+            border: 2px solid #556b2f;
+            padding: 40px 30px;
+            border-radius: 4px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 350px;
+            margin-top: 50px;
+        }
+        /* メイン画面（初期状態は非表示） */
+        #main-screen {
+            display: none;
+            background-color: #1e241d;
+            border: 3px double #556b2f;
+            padding: 25px;
+            border-radius: 4px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 450px;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #7cfc00; /* 蛍光グリーン */
+            text-shadow: 0 0 5px rgba(124, 252, 0, 0.5);
+            margin-top: 0;
+            letter-spacing: 2px;
+        }
+        h1 { font-size: 22px; border-bottom: 1px solid #556b2f; padding-bottom: 10px; }
+        h2 { font-size: 16px; text-align: left; margin-top: 20px; }
+
+        .balance-box {
+            background-color: #111410;
+            border: 1px dashed #7cfc00;
+            color: #7cfc00;
+            text-align: center;
+            padding: 15px;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #a3b19b;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            background-color: #111410;
+            border: 1px solid #556b2f;
+            color: #7cfc00;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        input:focus, select:focus {
+            outline: 1px solid #7cfc00;
+        }
+        /* 認証用入力欄 */
+        .pin-input {
+            text-align: center;
+            font-size: 24px;
+            letter-spacing: 10px;
+            width: 80%;
+            margin-bottom: 20px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #3b4d32; /* 濃い国防色 */
+            color: #dfedf0;
+            border: 1px solid #556b2f;
+            border-radius: 4px;
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        button:hover {
+            background-color: #4c6341;
+            border-color: #7cfc00;
+        }
+        .clear-btn {
+            background-color: #5a2525;
+            border-color: #8b0000;
+            margin-top: 15px;
+            font-size: 13px;
+            padding: 8px;
+        }
+        .clear-btn:hover {
+            background-color: #783232;
+        }
+        /* タイムライン */
+        .timeline {
+            background-color: #111410;
+            border: 1px solid #3b4d32;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .timeline-item {
+            padding: 6px 0;
+            border-bottom: 1px dashed #2b302a;
+            display: flex;
+            justify-content: space-between;
+        }
+        .timeline-item:last-child { border-bottom: none; }
+        .item-in { color: #4ed8a7; }   /* 収入は緑 */
+        .item-out { color: #ff6b6b; }  /* 支出は赤 */
+        .item-date { color: #666; font-size: 11px; }
+    </style>
+</head>
+<body>
+
+<div id="auth-screen">
+    <h2>[ パスワード入力 ]</h2>
+    <p style="font-size:12px; color:#889980; margin-bottom:20px;">4桁のパスワードを入力してください</p>
+    <input type="password" id="pin" class="pin-input" maxlength="4" placeholder="••••" onkeydown="if(event.key==='Enter')verifyPin()">
+    <button onclick="verifyPin()">ログイン</button>
+</div>
+
+<div id="main-screen">
+    <h1>お財布残高管理</h1>
+    
+    <div class="balance-box">
+        ￥ <span id="balance">0</span>
+    </div>
+
+    <div class="input-group">
+        <label>【区分】</label>
+        <select id="type">
+            <option value="out">支出（お金を使った）</option>
+            <option value="in">収入（お金を入れた）</option>
+        </select>
+    </div>
+
+    <div class="input-group">
+        <label>【メモ】</label>
+        <input type="text" id="memo" placeholder="例: コンビニ、昼食代" maxlength="20">
+    </div>
+
+    <div class="input-group">
+        <label>【金額】</label>
+        <input type="number" id="amount" placeholder="0" min="0">
+    </div>
+
+    <button onclick="updateBalance()">残高を更新する</button>
+
+    <h2>【履歴】</h2>
+    <div class="timeline" id="timeline">
+        </div>
+
+    <button class="clear-btn" onclick="resetData()">全データをリセット</button>
+</div>
+
+<script>
+    // ※初期パスワード設定（ここを好きな4桁に変更可能）
+    const CORRECT_PIN = "1234";
+
+    let currentBalance = parseInt(localStorage.getItem('milBalance')) || 0;
+    let historyData = JSON.parse(localStorage.getItem('milHistory')) || [];
+
+    // パスワード認証関数
+    function verifyPin() {
+        const inputPin = document.getElementById('pin').value;
+        if (inputPin === CORRECT_PIN) {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('main-screen').style.display = 'block';
+            renderData();
+        } else {
+            alert('パスワードが違います');
+            document.getElementById('pin').value = '';
+        }
+    }
+
+    // 画面の数値を最新にする関数
+    function renderData() {
+        document.getElementById('balance').innerText = currentBalance.toLocaleString();
+        
+        const timelineDiv = document.getElementById('timeline');
+        timelineDiv.innerHTML = '';
+
+        // 履歴を新しい順に表示
+        for (let i = historyData.length - 1; i >= 0; i--) {
+            const item = historyData[i];
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'timeline-item';
+            
+            const isInc = item.type === 'in';
+            const typeText = isInc ? '[収入]' : '[支出]';
+            const classText = isInc ? 'item-in' : 'item-out';
+            const sign = isInc ? '+' : '-';
+
+            itemDiv.innerHTML = `
+                <div>
+                    <span class="${classText}">${typeText}</span> ${item.memo || '未分類'}
+                </div>
+                <div style="text-align: right;">
+                    <span class="${classText}">${sign}￥${item.amount.toLocaleString()}</span><br>
+                    <span class="item-date">${item.date}</span>
+                </div>
+            `;
+            timelineDiv.appendChild(itemDiv);
+        }
+        if(historyData.length === 0) {
+            timelineDiv.innerHTML = '<div style="color:#556b2f; text-align:center; padding:10px;">履歴はありません</div>';
+        }
+    }
+
+    // 更新関数
+    function updateBalance() {
+        const type = document.getElementById('type').value;
+        const amountInput = document.getElementById('amount');
+        const memoInput = document.getElementById('memo');
+        const amount = parseInt(amountInput.value);
+        const memo = memoInput.value.trim();
+
+        if (isNaN(amount) || amount <= 0) {
+            alert('正しい金額を入力してください');
+            return;
+        }
+
+        if (type === 'out' && currentBalance < amount) {
+            alert('残高が不足しています');
+            return;
+        }
+
+        // 計算
+        if (type === 'in') currentBalance += amount;
+        if (type === 'out') currentBalance -= amount;
+
+        // 日時取得
+        const now = new Date();
+        const dateStr = `${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+        // 履歴データ追加
+        historyData.push({
+            type: type,
+            amount: amount,
+            memo: memo,
+            date: dateStr
+        });
+
+        // ローカルストレージ保存
+        localStorage.setItem('milBalance', currentBalance);
+        localStorage.setItem('milHistory', JSON.stringify(historyData));
+
+        // 入力欄クリアと再描画
+        amountInput.value = '';
+        memoInput.value = '';
+        renderData();
+    }
+
+    // 初期化関数
+    function resetData() {
+        if (confirm('すべての残高と履歴データが削除されます。よろしいですか？')) {
+            currentBalance = 0;
+            historyData = [];
+            localStorage.removeItem('milBalance');
+            localStorage.removeItem('milHistory');
+            renderData();
+        }
+    }
+</script>
+
+</body>
+</html>
