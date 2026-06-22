@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資産残高管理端末 (Biometrics)</title>
+    <title>資産残高管理端末 (Biometrics & Auto-Lock)</title>
     <style>
         body {
             font-family: 'Courier New', 'Zen Maru Gothic', monospace, sans-serif;
@@ -142,8 +142,7 @@
 </div>
 
 <script>
-    // 「1234」という文字列をSHA-256でハッシュ化した値
-    // ソースコードを見られても元の数字は直接分かりません
+    // 「1234」のハッシュ値
     const HASHED_PASSWORD = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
 
     let currentMode = 'cash';
@@ -159,8 +158,9 @@
     };
 
     let missCount = 0;
+    let idleTimer; // 自動ログアウト用のタイマー変数
 
-    // 起動時の生体認証チェック
+    // 起動時のチェック
     window.onload = function() {
         const lockUntil = localStorage.getItem('wallet_lock_time');
         if (lockUntil && Date.now() < lockUntil) {
@@ -177,12 +177,48 @@
         }
     }
 
-    // パスワード認証（SHA-256ハッシュ比較）
+    // ⏱️ 自動ログアウトの監視システム
+    function resetIdleTimer() {
+        clearTimeout(idleTimer);
+        // 180000ミリ秒 = 3分間操作がない場合にログアウトを実行
+        idleTimer = setTimeout(logout, 180000); 
+    }
+
+    // ユーザーの操作イベントを検知する登録
+    function startIdleMonitoring() {
+        window.onclick = resetIdleTimer;
+        window.onmousemove = resetIdleTimer;
+        window.onkeypress = resetIdleTimer;
+        window.ontouchstart = resetIdleTimer;
+        resetIdleTimer();
+    }
+
+    function stopIdleMonitoring() {
+        window.onclick = null;
+        window.onmousemove = null;
+        window.onkeypress = null;
+        window.ontouchstart = null;
+        clearTimeout(idleTimer);
+    }
+
+    // 🔒 ログアウト処理
+    function logout() {
+        stopIdleMonitoring();
+        document.getElementById('main-screen').style.display = 'none';
+        document.getElementById('auth-screen').style.display = 'block';
+        document.getElementById('pin').value = '';
+        
+        // もしすでに生体認証が登録されていれば自動で再起動
+        if (localStorage.getItem('wallet_bio_registered')) {
+            loginWithBiometrics();
+        }
+    }
+
+    // パスワード認証
     async function verifyPin() {
         const pinInput = document.getElementById('pin');
         const inputPin = pinInput.value;
 
-        // 入力値をハッシュ化して比較する
         const encoder = new TextEncoder();
         const utf8Data = encoder.encode(inputPin);
         const hashBuffer = await crypto.subtle.digest('SHA-256', utf8Data);
@@ -195,7 +231,7 @@
             missCount++;
             pinInput.value = '';
             if (missCount >= 5) {
-                const lockDuration = 180000; // 3分
+                const lockDuration = 180000;
                 localStorage.setItem('wallet_lock_time', Date.now() + lockDuration);
                 startLockTimer(lockDuration);
                 missCount = 0;
@@ -205,7 +241,7 @@
         }
     }
 
-    // 🔑 生体認証（顔・指紋）の登録関数
+    // 生体認証登録
     async function registerBiometrics() {
         try {
             const id = new Uint8Array(16);
@@ -215,11 +251,7 @@
                 publicKey: {
                     challenge: window.crypto.getRandomValues(new Uint8Array(32)),
                     rp: { name: "Wallet App" },
-                    user: {
-                        id: id,
-                        name: "user@wallet.local",
-                        displayName: "User"
-                    },
+                    user: { id: id, name: "user@wallet.local", displayName: "User" },
                     pubKeyCredParams: [{ type: "public-key", alg: -7 }],
                     authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
                     timeout: 60000
@@ -229,6 +261,7 @@
             const credential = await navigator.credentials.create(options);
             if (credential) {
                 localStorage.setItem('wallet_bio_registered', 'true');
+                document.getElementById('bio-login-btn').style.display = 'block';
                 alert('生体認証の登録に成功しました！次回から顔・指紋認証でログインできます。');
             }
         } catch (err) {
@@ -237,7 +270,7 @@
         }
     }
 
-    // 🔓 生体認証（顔・指紋）でのログイン関数
+    // 生体認証ログイン
     async function loginWithBiometrics() {
         try {
             const options = {
@@ -262,6 +295,7 @@
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('main-screen').style.display = 'block';
         renderData();
+        startIdleMonitoring(); /* ログイン完了と同時に放置監視スタート */
     }
 
     function startLockTimer(duration) {
