@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>お財布・PASMO残高管理端末</title>
+    <title>資産残高管理端末 (Biometrics)</title>
     <style>
         body {
             font-family: 'Courier New', 'Zen Maru Gothic', monospace, sans-serif;
-            background-color: #2b302a; /* OD色ベースの暗い背景 */
+            background-color: #2b302a; /* OD色ベース */
             color: #d4dcce;
             margin: 0;
             padding: 20px;
             display: flex;
             justify-content: center;
         }
-        /* 認証画面 */
         #auth-screen {
             background-color: #1a1e19;
             border: 2px solid #556b2f;
@@ -26,7 +25,6 @@
             max-width: 350px;
             margin-top: 50px;
         }
-        /* メイン画面（初期状態は非表示） */
         #main-screen {
             display: none;
             background-color: #1e241d;
@@ -47,113 +45,43 @@
         h1 { font-size: 22px; border-bottom: 1px solid #556b2f; padding-bottom: 10px; margin-bottom: 20px; }
         h2 { font-size: 16px; text-align: left; margin-top: 20px; }
 
-        /* タブ切り替え */
-        .tabs {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 15px;
-        }
+        .tabs { display: flex; gap: 5px; margin-bottom: 15px; }
         .tab-btn {
-            flex: 1;
-            padding: 10px;
-            background-color: #1a1e19;
-            color: #889980;
-            border: 1px solid #556b2f;
-            border-bottom: none;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-            border-radius: 4px 4px 0 0;
+            flex: 1; padding: 10px; background-color: #1a1e19; color: #889980;
+            border: 1px solid #556b2f; border-bottom: none; cursor: pointer;
+            font-weight: bold; font-size: 14px; border-radius: 4px 4px 0 0;
         }
-        .tab-btn.active {
-            background-color: #3b4d32;
-            color: #7cfc00;
-            border-color: #7cfc00 #7cfc00 #3b4d32 #7cfc00;
-        }
+        .tab-btn.active { background-color: #3b4d32; color: #7cfc00; border-color: #7cfc00 #7cfc00 #3b4d32 #7cfc00; }
 
         .balance-box {
-            background-color: #111410;
-            border: 1px dashed #7cfc00;
-            color: #7cfc00;
-            text-align: center;
-            padding: 15px;
-            font-size: 32px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            font-family: 'Courier New', monospace;
+            background-color: #111410; border: 1px dashed #7cfc00; color: #7cfc00;
+            text-align: center; padding: 15px; font-size: 32px; font-weight: bold;
+            margin-bottom: 20px; font-family: 'Courier New', monospace;
         }
-        .input-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #a3b19b;
-            font-size: 13px;
-            font-weight: bold;
-        }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #a3b19b; font-size: 13px; font-weight: bold; }
         input, select {
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-            background-color: #111410;
-            border: 1px solid #556b2f;
-            color: #7cfc00;
-            border-radius: 4px;
-            font-size: 16px;
+            width: 100%; padding: 10px; box-sizing: border-box; background-color: #111410;
+            border: 1px solid #556b2f; color: #7cfc00; border-radius: 4px; font-size: 16px;
         }
-        input:focus, select:focus {
-            outline: 1px solid #7cfc00;
-        }
-        .pin-input {
-            text-align: center;
-            font-size: 24px;
-            letter-spacing: 10px;
-            width: 80%;
-            margin-bottom: 20px;
-        }
+        input:focus, select:focus { outline: 1px solid #7cfc00; }
+        .pin-input { text-align: center; font-size: 24px; width: 80%; margin-bottom: 20px; letter-spacing: 10px; }
+        
         button {
-            width: 100%;
-            padding: 12px;
-            background-color: #3b4d32;
-            color: #dfedf0;
-            border: 1px solid #556b2f;
-            border-radius: 4px;
-            font-size: 15px;
-            cursor: pointer;
-            font-weight: bold;
-            letter-spacing: 1px;
+            width: 100%; padding: 12px; background-color: #3b4d32; color: #dfedf0;
+            border: 1px solid #556b2f; border-radius: 4px; font-size: 15px;
+            cursor: pointer; font-weight: bold; letter-spacing: 1px;
         }
-        button:hover {
-            background-color: #4c6341;
-            border-color: #7cfc00;
-        }
-        .clear-btn {
-            background-color: #5a2525;
-            border-color: #8b0000;
-            margin-top: 15px;
-            font-size: 13px;
-            padding: 8px;
-        }
-        .clear-btn:hover {
-            background-color: #783232;
-        }
-        /* タイムライン */
-        .timeline {
-            background-color: #111410;
-            border: 1px solid #3b4d32;
-            max-height: 180px;
-            overflow-y: auto;
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-        .timeline-item {
-            padding: 6px 0;
-            border-bottom: 1px dashed #2b302a;
-            display: flex;
-            justify-content: space-between;
-        }
+        button:hover { background-color: #4c6341; border-color: #7cfc00; }
+        button:disabled { background-color: #222; color: #555; border-color: #333; cursor: not-allowed; }
+        
+        .bio-btn { background-color: #1d3557; border-color: #457b9d; margin-bottom: 15px; }
+        .bio-btn:hover { background-color: #457b9d; border-color: #7cfc00; }
+        .clear-btn { background-color: #5a2525; border-color: #8b0000; margin-top: 15px; font-size: 13px; padding: 8px; }
+        .clear-btn:hover { background-color: #783232; }
+
+        .timeline { background-color: #111410; border: 1px solid #3b4d32; max-height: 180px; overflow-y: auto; padding: 10px; border-radius: 4px; font-size: 13px; }
+        .timeline-item { padding: 6px 0; border-bottom: 1px dashed #2b302a; display: flex; justify-content: space-between; }
         .timeline-item:last-child { border-bottom: none; }
         .item-in { color: #4ed8a7; }
         .item-out { color: #ff6b6b; }
@@ -163,10 +91,13 @@
 <body>
 
 <div id="auth-screen">
-    <h2>[ パスワード入力 ]</h2>
-    <p style="font-size:12px; color:#889980; margin-bottom:20px;">4桁のパスワードを入力してください</p>
+    <h2>[ 端末ロック解除 ]</h2>
+    <p id="auth-msg" style="font-size:12px; color:#889980; margin-bottom:20px;">生体認証を起動するか、4桁のパスワードを入力してください</p>
+    
+    <button id="bio-login-btn" class="bio-btn" onclick="loginWithBiometrics()" style="display:none;">👁️ 顔・指紋認証を起動</button>
+    
     <input type="password" id="pin" class="pin-input" maxlength="4" placeholder="••••" onkeydown="if(event.key==='Enter')verifyPin()">
-    <button onclick="verifyPin()">ログイン</button>
+    <button id="auth-btn" onclick="verifyPin()">パスワードでログイン</button>
 </div>
 
 <div id="main-screen">
@@ -202,19 +133,20 @@
     <button onclick="updateBalance()">残高を更新する</button>
 
     <h2>【履歴】</h2>
-    <div class="timeline" id="timeline">
-        </div>
+    <div class="timeline" id="timeline"></div>
+
+    <h2>【セキュリティ設定】</h2>
+    <button class="bio-btn" onclick="registerBiometrics()">🛡️ この端末の生体認証(顔・指紋)を登録</button>
 
     <button class="clear-btn" onclick="resetData()">全データをリセット</button>
 </div>
 
 <script>
-    const CORRECT_PIN = "1234";
+    // 「1234」という文字列をSHA-256でハッシュ化した値
+    // ソースコードを見られても元の数字は直接分かりません
+    const HASHED_PASSWORD = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
 
-    // モード管理 ('cash' または 'pasmo')
     let currentMode = 'cash';
-
-    // データの初期化（ローカルストレージから取得）
     let data = {
         cash: {
             balance: parseInt(localStorage.getItem('wallet_cash_balance')) || 0,
@@ -226,20 +158,140 @@
         }
     };
 
-    // パスワード認証
-    function verifyPin() {
-        const inputPin = document.getElementById('pin').value;
-        if (inputPin === CORRECT_PIN) {
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('main-screen').style.display = 'block';
-            renderData();
-        } else {
-            alert('パスワードが違います');
-            document.getElementById('pin').value = '';
+    let missCount = 0;
+
+    // 起動時の生体認証チェック
+    window.onload = function() {
+        const lockUntil = localStorage.getItem('wallet_lock_time');
+        if (lockUntil && Date.now() < lockUntil) {
+            startLockTimer(lockUntil - Date.now());
+            return;
+        }
+
+        if (window.PublicKeyCredential) {
+            const hasCred = localStorage.getItem('wallet_bio_registered');
+            if (hasCred) {
+                document.getElementById('bio-login-btn').style.display = 'block';
+                loginWithBiometrics();
+            }
         }
     }
 
-    // 現金 / PASMO の切り替え
+    // パスワード認証（SHA-256ハッシュ比較）
+    async function verifyPin() {
+        const pinInput = document.getElementById('pin');
+        const inputPin = pinInput.value;
+
+        // 入力値をハッシュ化して比較する
+        const encoder = new TextEncoder();
+        const utf8Data = encoder.encode(inputPin);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', utf8Data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        if (inputHash === HASHED_PASSWORD) {
+            loginSuccess();
+        } else {
+            missCount++;
+            pinInput.value = '';
+            if (missCount >= 5) {
+                const lockDuration = 180000; // 3分
+                localStorage.setItem('wallet_lock_time', Date.now() + lockDuration);
+                startLockTimer(lockDuration);
+                missCount = 0;
+            } else {
+                alert(`パスワードが違います（残り: ${5 - missCount}回）`);
+            }
+        }
+    }
+
+    // 🔑 生体認証（顔・指紋）の登録関数
+    async function registerBiometrics() {
+        try {
+            const id = new Uint8Array(16);
+            window.crypto.getRandomValues(id);
+
+            const options = {
+                publicKey: {
+                    challenge: window.crypto.getRandomValues(new Uint8Array(32)),
+                    rp: { name: "Wallet App" },
+                    user: {
+                        id: id,
+                        name: "user@wallet.local",
+                        displayName: "User"
+                    },
+                    pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+                    authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+                    timeout: 60000
+                }
+            };
+
+            const credential = await navigator.credentials.create(options);
+            if (credential) {
+                localStorage.setItem('wallet_bio_registered', 'true');
+                alert('生体認証の登録に成功しました！次回から顔・指紋認証でログインできます。');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('登録がキャンセルされたか、お使いの端末が対応していません。');
+        }
+    }
+
+    // 🔓 生体認証（顔・指紋）でのログイン関数
+    async function loginWithBiometrics() {
+        try {
+            const options = {
+                publicKey: {
+                    challenge: window.crypto.getRandomValues(new Uint8Array(32)),
+                    userVerification: "required",
+                    timeout: 60000
+                }
+            };
+
+            const assertion = await navigator.credentials.get(options);
+            if (assertion) {
+                loginSuccess();
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    function loginSuccess() {
+        missCount = 0;
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('main-screen').style.display = 'block';
+        renderData();
+    }
+
+    function startLockTimer(duration) {
+        const authBtn = document.getElementById('auth-btn');
+        const bioBtn = document.getElementById('bio-login-btn');
+        const pinInput = document.getElementById('pin');
+        const authMsg = document.getElementById('auth-msg');
+        
+        authBtn.disabled = true;
+        bioBtn.disabled = true;
+        pinInput.disabled = true;
+        
+        let timeLeft = Math.ceil(duration / 1000);
+        const timer = setInterval(() => {
+            timeLeft--;
+            authMsg.innerText = `連続失敗によりロック中：残り ${timeLeft} 秒`;
+            authMsg.style.color = '#ff6b6b';
+            
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                authBtn.disabled = false;
+                bioBtn.disabled = localStorage.getItem('wallet_bio_registered') ? false : true;
+                pinInput.disabled = false;
+                authMsg.innerText = "4桁のパスワードを入力してください";
+                authMsg.style.color = '#889980';
+                localStorage.removeItem('wallet_lock_time');
+            }
+        }, 1000);
+    }
+
     function switchMode(mode) {
         currentMode = mode;
         document.getElementById('tab-cash').classList.toggle('active', mode === 'cash');
@@ -247,7 +299,6 @@
         renderData();
     }
 
-    // 画面表示の更新
     function renderData() {
         const activeData = data[currentMode];
         document.getElementById('balance').innerText = activeData.balance.toLocaleString();
@@ -255,7 +306,6 @@
         const timelineDiv = document.getElementById('timeline');
         timelineDiv.innerHTML = '';
 
-        // 選択中モードの履歴を表示
         for (let i = activeData.history.length - 1; i >= 0; i--) {
             const item = activeData.history[i];
             const itemDiv = document.createElement('div');
@@ -267,9 +317,7 @@
             const sign = isInc ? '+' : '-';
 
             itemDiv.innerHTML = `
-                <div>
-                    <span class="${classText}">${typeText}</span> ${item.memo || '未分類'}
-                </div>
+                <div><span class="${classText}">${typeText}</span> ${item.memo || '未分類'}</div>
                 <div style="text-align: right;">
                     <span class="${classText}">${sign}￥${item.amount.toLocaleString()}</span><br>
                     <span class="item-date">${item.date}</span>
@@ -282,7 +330,6 @@
         }
     }
 
-    // 残高の更新
     function updateBalance() {
         const type = document.getElementById('type').value;
         const amountInput = document.getElementById('amount');
@@ -296,39 +343,26 @@
         }
 
         let activeData = data[currentMode];
-
         if (type === 'out' && activeData.balance < amount) {
             alert('残高が不足しています');
             return;
         }
 
-        // 計算
         if (type === 'in') activeData.balance += amount;
         if (type === 'out') activeData.balance -= amount;
 
-        // 日時取得
         const now = new Date();
         const dateStr = `${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
-        // 履歴追加
-        activeData.history.push({
-            type: type,
-            amount: amount,
-            memo: memo,
-            date: dateStr
-        });
+        activeData.history.push({ type: type, amount: amount, memo: memo, date: dateStr });
 
-        // それぞれローカルストレージへ保存
         localStorage.setItem(`wallet_${currentMode}_balance`, activeData.balance);
         localStorage.setItem(`wallet_${currentMode}_history`, JSON.stringify(activeData.history));
 
-        // 入力欄クリアと再描画
-        amountInput.value = '';
-        memoInput.value = '';
+        amountInput.value = ''; memoInput.value = '';
         renderData();
     }
 
-    // データリセット
     function resetData() {
         const modeText = currentMode === 'cash' ? '現金' : 'PASMO';
         if (confirm(`選択中の【${modeText}】の残高と履歴データをすべて削除します。よろしいですか？`)) {
